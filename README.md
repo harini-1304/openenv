@@ -237,7 +237,7 @@ python -m pytest tests/test_inference.py
 
 ### Contact
 - **Repository**: https://github.com/harini-1304/open-env
-- **Hugging Face**: https://huggingface.co/spaces/harini-1304/email-triage-working
+- **Hugging Face**: https://huggingface.co/spaces/harini-1304/email-triage-env-final
 
 ## License
 
