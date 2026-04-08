@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 # Environment variables - Use OpenEnv provided ones
 API_BASE_URL = os.environ["API_BASE_URL"]
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
-API_KEY = os.environ["API_KEY"]
+API_KEY = os.environ["OPENAI_API_KEY"]
 ENVIRONMENT_URL = "https://harini-1304-email-triage-env-final.hf.space"
 TASK_NAME = "email_triage"
 BENCHMARK = "openenv_round1"
@@ -30,7 +30,7 @@ class EmailTriageAgent:
             # Use exact OpenEnv format
             print(f"[DEBUG] Initializing OpenAI client with base_url: {os.environ['API_BASE_URL']}")
             client = openai.OpenAI(
-                api_key=os.environ["API_KEY"],
+                api_key=os.environ["OPENAI_API_KEY"],
                 base_url=os.environ["API_BASE_URL"]
             )
             
