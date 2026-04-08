@@ -7,9 +7,11 @@ from typing import Dict, Any, Optional
 # Environment variables - Use OpenEnv provided ones
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
-HF_TOKEN = os.environ.get("HF_TOKEN")  # Correct variable name per OpenEnv docs
-if not HF_TOKEN:
-    raise ValueError("HF_TOKEN environment variable is required")
+
+# Try API_KEY first (validator requirement), fallback to HF_TOKEN
+API_KEY = os.environ.get("API_KEY") or os.environ.get("HF_TOKEN")
+if not API_KEY:
+    raise ValueError("Neither API_KEY nor HF_TOKEN environment variables found")
 ENVIRONMENT_URL = "https://harini-1304-email-triage-env-final.hf.space"
 TASK_NAME = "email_triage"
 BENCHMARK = "openenv_round1"
@@ -32,7 +34,7 @@ class EmailTriageAgent:
             # Use exact OpenEnv format
             print(f"[DEBUG] Initializing OpenAI client with base_url: {API_BASE_URL}")
             client = openai.OpenAI(
-                api_key=HF_TOKEN,
+                api_key=API_KEY,
                 base_url=API_BASE_URL
             )
             
