@@ -9,9 +9,24 @@ print(f"Python version: {os.sys.version}")
 print(f"Current working directory: {os.getcwd()}")
 
 # Environment variables - Use OpenEnv provided ones (NO DEFAULTS!)
-API_BASE_URL = os.environ["API_BASE_URL"]  # Required - no default!
+try:
+    API_BASE_URL = os.environ["API_BASE_URL"]  # Required - no default!
+    print(f"[ULTRA DEBUG] API_BASE_URL loaded: {API_BASE_URL}")
+except KeyError as e:
+    print(f"[ULTRA DEBUG] API_BASE_URL MISSING: {e}")
+    raise
+
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
-print(f"Basic setup complete. API_BASE_URL: {API_BASE_URL}, MODEL_NAME: {MODEL_NAME}")
+print(f"[ULTRA DEBUG] MODEL_NAME: {MODEL_NAME}")
+
+try:
+    API_KEY = os.environ["API_KEY"]  # Required by validator
+    print(f"[ULTRA DEBUG] API_KEY loaded: {len(API_KEY)} chars, starts with: {API_KEY[:10]}...")
+except KeyError as e:
+    print(f"[ULTRA DEBUG] API_KEY MISSING: {e}")
+    raise
+
+print(f"[ULTRA DEBUG] All environment variables loaded successfully")
 
 # Debug: Print all environment variables
 print("[DEBUG] All environment variables:")
@@ -46,16 +61,20 @@ class EmailTriageAgent:
         """Use LLM to classify email"""
         try:
             import openai
+            print(f"[ULTRA DEBUG] About to import openai")
             # Use exact OpenEnv format
-            print(f"[DEBUG] Initializing OpenAI client with base_url: {API_BASE_URL}")
-            print(f"[DEBUG] API_KEY length: {len(API_KEY)}")
-            print(f"[DEBUG] API_KEY starts with: {API_KEY[:10]}...")
+            print(f"[ULTRA DEBUG] Initializing OpenAI client")
+            print(f"[ULTRA DEBUG] Base URL: {API_BASE_URL}")
+            print(f"[ULTRA DEBUG] API Key: {len(API_KEY)} chars")
             client = openai.OpenAI(
                 api_key=API_KEY,
                 base_url=API_BASE_URL
             )
+            print(f"[ULTRA DEBUG] OpenAI client created successfully")
             
-            print(f"[DEBUG] Making LLM API call for email classification")
+            print(f"[ULTRA DEBUG] About to make API call")
+            print(f"[ULTRA DEBUG] Model: {MODEL_NAME}")
+            print(f"[ULTRA DEBUG] Email length: {len(email)} chars")
             print(f"[DEBUG] Model: {MODEL_NAME}")
             print(f"[DEBUG] Temperature: {TEMPERATURE}")
             print(f"[DEBUG] Max tokens: {MAX_TOKENS}")
@@ -79,9 +98,11 @@ Email:
                 max_tokens=MAX_TOKENS
             )
             
-            print(f"[DEBUG] LLM API call successful, got response")
-            print(f"[DEBUG] Response type: {type(response)}")
-            print(f"[DEBUG] Response choices count: {len(response.choices)}")
+            print(f"[ULTRA DEBUG] API call completed successfully!")
+            print(f"[ULTRA DEBUG] Response type: {type(response)}")
+            print(f"[ULTRA DEBUG] Response choices count: {len(response.choices)}")
+            print(f"[ULTRA DEBUG] First choice: {response.choices[0]}")
+            print(f"[ULTRA DEBUG] Message content: {response.choices[0].message.content}")
             print("[LLM RAW OUTPUT]:", response.choices[0].message.content)
             
             # Extract JSON safely
