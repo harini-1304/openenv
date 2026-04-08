@@ -47,7 +47,7 @@ Documentation = "https://huggingface.co/spaces/harini-1304/email-triage-env-fina
 "OpenEnv Competition" = "https://openenv.github.io"
 
 [project.scripts]
-server = "app:app"
+server = "app:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
