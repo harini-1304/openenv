@@ -27,8 +27,14 @@ class EmailTriageAgent:
         """Use LLM to classify email"""
         try:
             import openai
-            client = openai.OpenAI(api_key=API_KEY, base_url=API_BASE_URL)
+            # Use exact OpenEnv format
+            print(f"[DEBUG] Initializing OpenAI client with base_url: {os.environ['API_BASE_URL']}")
+            client = openai.OpenAI(
+                api_key=os.environ["API_KEY"],
+                base_url=os.environ["API_BASE_URL"]
+            )
             
+            print(f"[DEBUG] Making LLM API call for email classification")
             prompt = f"""
 Classify this email for triage:
 
@@ -52,7 +58,9 @@ Respond with JSON format:
                 max_tokens=MAX_TOKENS
             )
             
+            print(f"[DEBUG] LLM API call successful, got response")
             result = json.loads(response.choices[0].message.content)
+            print(f"[DEBUG] Parsed LLM result: {result}")
             return result
             
         except Exception as e:
