@@ -8,8 +8,8 @@ print("=== INFERENCE.PY STARTED ===")
 print(f"Python version: {os.sys.version}")
 print(f"Current working directory: {os.getcwd()}")
 
-# Environment variables - Use OpenEnv provided ones
-API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
+# Environment variables - Use OpenEnv provided ones (NO DEFAULTS!)
+API_BASE_URL = os.environ["API_BASE_URL"]  # Required - no default!
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 print(f"Basic setup complete. API_BASE_URL: {API_BASE_URL}, MODEL_NAME: {MODEL_NAME}")
 
@@ -22,15 +22,11 @@ for k, v in env_vars.items():
     else:
         print(f"  {k}: {v}")
 
-# Try API_KEY first (validator requirement), fallback to HF_TOKEN
-API_KEY = os.environ.get("API_KEY") or os.environ.get("HF_TOKEN")
-if not API_KEY:
-    print("[ERROR] Neither API_KEY nor HF_TOKEN environment variables found")
-    raise ValueError("Neither API_KEY nor HF_TOKEN environment variables found")
-else:
-    print(f"[DEBUG] Using API_KEY from: {'API_KEY' if os.environ.get('API_KEY') else 'HF_TOKEN'}")
-    print(f"[DEBUG] API_BASE_URL: {API_BASE_URL}")
-    print(f"[DEBUG] MODEL_NAME: {MODEL_NAME}")
+# Force API_KEY - no fallbacks!
+API_KEY = os.environ["API_KEY"]  # Required by validator
+print(f"[DEBUG] Using API_KEY (required by validator)")
+print(f"[DEBUG] API_BASE_URL: {API_BASE_URL}")
+print(f"[DEBUG] MODEL_NAME: {MODEL_NAME}")
 ENVIRONMENT_URL = "https://harini-1304-email-triage-env-final.hf.space"
 TASK_NAME = "email_triage"
 BENCHMARK = "openenv_round1"
@@ -104,7 +100,10 @@ Email:
             
         except Exception as e:
             print(f"[ERROR] LLM FAILED:", e)
-            return {"category": "normal", "response": "reply"}
+            import traceback
+            traceback.print_exc()
+            # CRITICAL: Do not return fallback - force the error to be visible
+            raise Exception(f"LLM API call failed: {e}")
     
     def classify_email_rules(self, email: str) -> Dict[str, str]:
         """Rule-based email classification"""
