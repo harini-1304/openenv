@@ -4,9 +4,14 @@ import json
 import time
 from typing import Dict, Any, Optional
 
+print("=== INFERENCE.PY STARTED ===")
+print(f"Python version: {os.sys.version}")
+print(f"Current working directory: {os.getcwd()}")
+
 # Environment variables - Use OpenEnv provided ones
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
+print(f"Basic setup complete. API_BASE_URL: {API_BASE_URL}, MODEL_NAME: {MODEL_NAME}")
 
 # Debug: Print all environment variables
 print("[DEBUG] All environment variables:")
@@ -305,4 +310,6 @@ def main():
         print("[END] success=false steps=0 score=0.00 rewards=")
 
 if __name__ == "__main__":
+    print("=== ABOUT TO CALL MAIN() ===")
     main()
+    print("=== MAIN() COMPLETED ===")
