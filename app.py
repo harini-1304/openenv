@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any
 
@@ -114,6 +115,16 @@ class EmailTriageEnv:
         }
 
 app = FastAPI(title="Email Triage Environment", version="1.0.0")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 env = EmailTriageEnv()
 
 @app.get("/")
@@ -139,6 +150,12 @@ def step(action: Action):
 def state():
     result = env.get_state()
     return result
+
+@app.options("/reset")
+@app.options("/step")
+@app.options("/state")
+def handle_options():
+    return {"message": "OK"}
 
 if __name__ == "__main__":
     import uvicorn
