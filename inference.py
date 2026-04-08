@@ -1,5 +1,4 @@
 import os
-import openai
 import requests
 import json
 import time
@@ -8,11 +7,7 @@ from typing import Dict, Any
 # Environment variables
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
-HF_TOKEN = os.getenv("HF_TOKEN", "")
-ENVIRONMENT_URL = os.getenv("ENVIRONMENT_URL", "http://localhost:7860")
-
-# Initialize OpenAI client
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""), base_url=API_BASE_URL)
+ENVIRONMENT_URL = "https://harini-1304-email-triage-env-final.hf.space"
 
 class EmailTriageAgent:
     def __init__(self):
@@ -22,6 +17,9 @@ class EmailTriageAgent:
     def classify_email_llm(self, email: str) -> Dict[str, str]:
         """Use LLM to classify email"""
         try:
+            import openai
+            client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""), base_url=API_BASE_URL)
+            
             prompt = f"""
 Classify this email for triage:
 
@@ -92,7 +90,7 @@ Respond with JSON format:
     def submit_action(self, category: str, response: str) -> Dict[str, Any]:
         """Submit action to environment"""
         try:
-            action_data = {"action": {"category": category, "response": response}}
+            action_data = {"category": category, "response": response}
             response = requests.post(f"{ENVIRONMENT_URL}/step", json=action_data, timeout=10)
             if response.status_code == 200:
                 return response.json()
@@ -214,13 +212,13 @@ def main():
         # Performance rating
         accuracy = (average_score / 9.0) * 100
         if accuracy >= 90:
-            rating = "🏆 EXCELLENT"
+            rating = "EXCEPTIONAL"
         elif accuracy >= 75:
-            rating = "🥇 GOOD"
+            rating = "EXCELLENT"
         elif accuracy >= 60:
-            rating = "🥈 FAIR"
+            rating = "GOOD"
         else:
-            rating = "🥉 NEEDS IMPROVEMENT"
+            rating = "NEEDS IMPROVEMENT"
         
         print(f"Performance Rating: {rating}")
         
