@@ -1,0 +1,120 @@
+name: email_triage
+description: |
+  Email Triage Environment - An interactive environment for training and evaluating AI agents on email classification and response prioritization tasks.
+  
+  This environment simulates a real-world email triage system where agents must:
+  - Classify incoming emails into categories (urgent, normal, spam)
+  - Determine appropriate responses (reply, ignore, escalate)
+  - Handle 9 different email scenarios with varying complexity
+  
+  The environment provides realistic email content spanning technical issues, business inquiries, urgent system alerts, and spam messages.
+  Agents are evaluated on both classification accuracy (0.5 points) and response appropriateness (0.5 points) for each email.
+
+version: 1.0.0
+
+# Environment metadata
+environment:
+  type: interactive
+  domain: email_management
+  task_count: 9
+  max_episode_length: 9
+  
+# API specification
+api:
+  base_url: /
+  endpoints:
+    - path: /
+      method: GET
+      description: Health check and environment info
+      response:
+        status: string
+        environment: string
+        version: string
+        total_tasks: integer
+        
+    - path: /reset
+      method: POST
+      description: Reset environment and start new episode
+      response:
+        observation:
+          email: string
+          task_id: integer
+        reward: float
+        done: boolean
+        info: object
+        
+    - path: /step
+      method: POST
+      description: Submit action and advance environment
+      request:
+        category: string  # urgent, normal, spam
+        response: string  # reply, ignore, escalate
+      response:
+        observation:
+          email: string
+          task_id: integer
+        reward: float
+        done: boolean
+        info: object
+        
+    - path: /state
+      method: GET
+      description: Get current environment state
+      response:
+        current_task:
+          email: string
+          task_id: integer
+        task_index: integer
+        total_tasks: integer
+        episode_done: boolean
+        total_reward: float
+
+# Evaluation criteria
+evaluation:
+  reward_system:
+    category_correct: 0.5
+    response_correct: 0.5
+    max_total: 9.0
+  
+  performance_levels:
+    excellent: ">= 90%"
+    good: ">= 75%"
+    fair: ">= 60%"
+    needs_improvement: "< 60%"
+
+# Task categories
+categories:
+  - urgent: emails requiring immediate attention or escalation
+  - normal: standard business emails requiring response
+  - spam: unsolicited or promotional emails to ignore
+
+# Response types
+responses:
+  - reply: send a response to the email
+  - ignore: delete or ignore the email
+  - escalate: forward to higher authority or emergency team
+
+# Baseline agent
+baseline:
+  model: gpt-4o-mini
+  approach: "LLM-based classification with rule-based fallback"
+  expected_accuracy: "85-95%"
+
+# Dependencies
+dependencies:
+  - fastapi==0.104.1
+  - uvicorn==0.24.0
+  - pydantic==2.5.0
+
+# Docker configuration
+docker:
+  base_image: python:3.10
+  port: 7860
+  command: ["python", "app.py"]
+
+# Authors and contact
+authors:
+  - name: Hack Maestros
+    competition: OpenEnv Round 1
+    
+license: MIT
