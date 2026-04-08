@@ -36,16 +36,13 @@ class EmailTriageAgent:
             
             print(f"[DEBUG] Making LLM API call for email classification")
             prompt = f"""
-Classify this email for triage:
+You MUST respond ONLY in valid JSON.
 
-Email: {email}
+Format:
+{{"category":"urgent|normal|spam","response":"reply|ignore|escalate"}}
 
-Respond with JSON format:
-{{
-    "category": "urgent" or "normal" or "spam",
-    "response": "reply" or "ignore" or "escalate",
-    "reasoning": "brief explanation"
-}}
+Email:
+{email}
 """
             
             response = client.chat.completions.create(
@@ -59,13 +56,25 @@ Respond with JSON format:
             )
             
             print(f"[DEBUG] LLM API call successful, got response")
-            result = json.loads(response.choices[0].message.content)
+            print("[LLM RAW OUTPUT]:", response.choices[0].message.content)
+            
+            # Extract JSON safely
+            content = response.choices[0].message.content.strip()
+            start = content.find("{")
+            end = content.rfind("}") + 1
+            
+            if start != -1 and end != -1:
+                json_str = content[start:end]
+                result = json.loads(json_str)
+            else:
+                raise ValueError("No JSON found in response")
+            
             print(f"[DEBUG] Parsed LLM result: {result}")
             return result
             
         except Exception as e:
-            print(f"[ERROR] LLM classification failed: {e}")
-            return self.classify_email_rules(email)
+            print(f"[ERROR] LLM FAILED:", e)
+            return {"category": "normal", "response": "reply"}
     
     def classify_email_rules(self, email: str) -> Dict[str, str]:
         """Rule-based email classification"""
