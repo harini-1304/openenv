@@ -4,10 +4,10 @@ import json
 import time
 from typing import Dict, Any, Optional
 
-# Environment variables
-API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
-HF_TOKEN = os.getenv("HF_TOKEN", "")
+# Environment variables - Use OpenEnv provided ones
+API_BASE_URL = os.environ["API_BASE_URL"]
+MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
+API_KEY = os.environ["API_KEY"]
 ENVIRONMENT_URL = "https://harini-1304-email-triage-env-final.hf.space"
 TASK_NAME = "email_triage"
 BENCHMARK = "openenv_round1"
@@ -27,7 +27,7 @@ class EmailTriageAgent:
         """Use LLM to classify email"""
         try:
             import openai
-            client = openai.OpenAI(api_key=HF_TOKEN, base_url=API_BASE_URL)
+            client = openai.OpenAI(api_key=API_KEY, base_url=API_BASE_URL)
             
             prompt = f"""
 Classify this email for triage:
