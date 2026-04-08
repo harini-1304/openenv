@@ -2,23 +2,32 @@ import os
 import requests
 import json
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 # Environment variables
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+HF_TOKEN = os.getenv("HF_TOKEN", "")
 ENVIRONMENT_URL = "https://harini-1304-email-triage-env-final.hf.space"
+TASK_NAME = "email_triage"
+BENCHMARK = "openenv_round1"
+MAX_STEPS = 9
+TEMPERATURE = 0.1
+MAX_TOKENS = 150
+SUCCESS_SCORE_THRESHOLD = 0.1
 
 class EmailTriageAgent:
     def __init__(self):
         self.total_reward = 0.0
         self.episodes_completed = 0
+        self.step_count = 0
+        self.rewards = []
         
     def classify_email_llm(self, email: str) -> Dict[str, str]:
         """Use LLM to classify email"""
         try:
             import openai
-            client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""), base_url=API_BASE_URL)
+            client = openai.OpenAI(api_key=HF_TOKEN, base_url=API_BASE_URL)
             
             prompt = f"""
 Classify this email for triage:
@@ -39,7 +48,8 @@ Respond with JSON format:
                     {"role": "system", "content": "You are an email triage expert. Classify emails and determine appropriate responses."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.1
+                temperature=TEMPERATURE,
+                max_tokens=MAX_TOKENS
             )
             
             result = json.loads(response.choices[0].message.content)
@@ -101,76 +111,89 @@ Respond with JSON format:
             print(f"[ERROR] Action request failed: {e}")
             return None
     
+    def log_start(self, task: str, env: str, model: str) -> None:
+        """Log episode start"""
+        print(f"[START] task={task} env={env} model={model}", flush=True)
+    
+    def log_step(self, step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
+        """Log step with required format"""
+        error_val = error if error else "null"
+        done_val = str(done).lower()
+        print(f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}", flush=True)
+    
+    def log_end(self, success: bool, steps: int, score: float, rewards: list) -> None:
+        """Log episode end with required format"""
+        success_val = str(success).lower()
+        rewards_str = ",".join([f"{r:.2f}" for r in rewards])
+        print(f"[END] success={success_val} steps={steps} score={score:.2f} rewards={rewards_str}", flush=True)
+    
     def run_episode(self) -> float:
-        """Run one complete episode"""
-        print("[START] Starting new episode")
+        """Run one complete episode with proper logging"""
+        self.log_start(TASK_NAME, BENCHMARK, MODEL_NAME)
         
         # Reset environment
         reset_result = self.reset_environment()
         if not reset_result:
             print("[ERROR] Failed to reset environment")
+            self.log_end(False, 0, 0.0, [])
             return 0.0
         
         episode_reward = 0.0
-        step_count = 0
+        self.step_count = 0
+        self.rewards = []
+        episode_success = True
         
-        while not reset_result.get("done", False):
-            step_count += 1
+        while not reset_result.get("done", False) and self.step_count < MAX_STEPS:
+            self.step_count += 1
             
             # Get current email
             observation = reset_result.get("observation", {})
             email = observation.get("email", "")
             task_id = observation.get("task_id", 0)
             
-            print(f"[STEP] Processing task {task_id}")
-            print(f"[STEP] Email: {email[:100]}...")
-            
             # Classify email
             classification = self.classify_email_llm(email)
             category = classification.get("category", "normal")
             response = classification.get("response", "reply")
-            reasoning = classification.get("reasoning", "")
             
-            print(f"[STEP] Classification: {category}/{response}")
-            print(f"[STEP] Reasoning: {reasoning}")
+            # Format action string
+            action_str = f"category={category},response={response}"
             
             # Submit action
             step_result = self.submit_action(category, response)
             if not step_result:
-                print("[ERROR] Failed to submit action")
+                print(f"[ERROR] Failed to submit action for task {task_id}")
+                self.log_step(self.step_count, action_str, 0.0, False, "Failed to submit action")
+                episode_success = False
                 break
             
             # Get reward
             reward = step_result.get("reward", 0.0)
             episode_reward += reward
-            
-            info = step_result.get("info", {})
-            category_correct = info.get("category_correct", False)
-            response_correct = info.get("response_correct", False)
-            
-            print(f"[STEP] Step reward: {reward:.1f}")
-            print(f"[STEP] Category correct: {category_correct}")
-            print(f"[STEP] Response correct: {response_correct}")
+            self.rewards.append(reward)
             
             # Check if episode is done
-            if step_result.get("done", False):
-                break
+            done = step_result.get("done", False)
+            
+            # Log step
+            self.log_step(self.step_count, action_str, reward, done, None)
             
             # Update for next iteration
             reset_result = step_result
         
+        # Calculate final score (normalized to [0, 1])
+        final_score = min(episode_reward / 9.0, 1.0)  # Normalize to [0, 1]
+        
+        # Log episode end
+        self.log_end(episode_success, self.step_count, final_score, self.rewards)
+        
         self.total_reward += episode_reward
         self.episodes_completed += 1
         
-        print(f"[END] Episode completed")
-        print(f"[END] Episode reward: {episode_reward:.1f}")
-        print(f"[END] Total reward: {self.total_reward:.1f}")
-        print(f"[END] Episodes completed: {self.episodes_completed}")
-        
-        return episode_reward
+        return final_score
 
 def main():
-    """Main inference function"""
+    """Main inference function with proper logging"""
     print("=== Email Triage Environment Inference ===")
     print(f"API Base URL: {API_BASE_URL}")
     print(f"Model: {MODEL_NAME}")
@@ -192,7 +215,7 @@ def main():
             episode_score = agent.run_episode()
             total_score += episode_score
             
-            print(f"Episode {episode + 1} score: {episode_score:.1f}/9.0")
+            print(f"Episode {episode + 1} score: {episode_score:.2f}")
             
             # Small delay between episodes
             if episode < num_episodes - 1:
@@ -205,17 +228,16 @@ def main():
         print("FINAL RESULTS")
         print(f"{'='*50}")
         print(f"Total episodes: {num_episodes}")
-        print(f"Average score: {average_score:.1f}/9.0")
-        print(f"Average accuracy: {(average_score/9.0)*100:.1f}%")
+        print(f"Average score: {average_score:.2f}/1.00")
+        print(f"Average accuracy: {average_score*100:.1f}%")
         print(f"Total reward accumulated: {agent.total_reward:.1f}")
         
         # Performance rating
-        accuracy = (average_score / 9.0) * 100
-        if accuracy >= 90:
+        if average_score >= 0.90:
             rating = "EXCEPTIONAL"
-        elif accuracy >= 75:
+        elif average_score >= 0.75:
             rating = "EXCELLENT"
-        elif accuracy >= 60:
+        elif average_score >= 0.60:
             rating = "GOOD"
         else:
             rating = "NEEDS IMPROVEMENT"
