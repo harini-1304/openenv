@@ -7,18 +7,9 @@ from typing import Dict, Any, Optional
 # Environment variables - Use OpenEnv provided ones
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
-
-# Debug: Show available environment variables
-print("[DEBUG] Available environment variables:")
-for key, value in os.environ.items():
-    if key in ['API_BASE_URL', 'MODEL_NAME', 'API_KEY', 'HF_TOKEN', 'OPENAI_API_KEY']:
-        print(f"  {key}: {'***' if 'KEY' in key or 'TOKEN' in key else value}")
-
-API_KEY = os.environ.get("API_KEY")
-if not API_KEY:
-    print("[ERROR] API_KEY not found in environment variables!")
-    print("[ERROR] Available keys with KEY/TOKEN:", [k for k in os.environ.keys() if 'KEY' in k or 'TOKEN' in k])
-    raise ValueError("API_KEY environment variable is required")
+HF_TOKEN = os.environ.get("HF_TOKEN")  # Correct variable name per OpenEnv docs
+if not HF_TOKEN:
+    raise ValueError("HF_TOKEN environment variable is required")
 ENVIRONMENT_URL = "https://harini-1304-email-triage-env-final.hf.space"
 TASK_NAME = "email_triage"
 BENCHMARK = "openenv_round1"
@@ -41,7 +32,7 @@ class EmailTriageAgent:
             # Use exact OpenEnv format
             print(f"[DEBUG] Initializing OpenAI client with base_url: {API_BASE_URL}")
             client = openai.OpenAI(
-                api_key=API_KEY,
+                api_key=HF_TOKEN,
                 base_url=API_BASE_URL
             )
             
