@@ -8,10 +8,24 @@ from typing import Dict, Any, Optional
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 
+# Debug: Print all environment variables
+print("[DEBUG] All environment variables:")
+env_vars = {k: v for k, v in os.environ.items() if any(keyword in k.upper() for keyword in ['API', 'KEY', 'TOKEN', 'URL', 'MODEL'])}
+for k, v in env_vars.items():
+    if 'KEY' in k.upper() or 'TOKEN' in k.upper():
+        print(f"  {k}: ***")
+    else:
+        print(f"  {k}: {v}")
+
 # Try API_KEY first (validator requirement), fallback to HF_TOKEN
 API_KEY = os.environ.get("API_KEY") or os.environ.get("HF_TOKEN")
 if not API_KEY:
+    print("[ERROR] Neither API_KEY nor HF_TOKEN environment variables found")
     raise ValueError("Neither API_KEY nor HF_TOKEN environment variables found")
+else:
+    print(f"[DEBUG] Using API_KEY from: {'API_KEY' if os.environ.get('API_KEY') else 'HF_TOKEN'}")
+    print(f"[DEBUG] API_BASE_URL: {API_BASE_URL}")
+    print(f"[DEBUG] MODEL_NAME: {MODEL_NAME}")
 ENVIRONMENT_URL = "https://harini-1304-email-triage-env-final.hf.space"
 TASK_NAME = "email_triage"
 BENCHMARK = "openenv_round1"
@@ -33,12 +47,17 @@ class EmailTriageAgent:
             import openai
             # Use exact OpenEnv format
             print(f"[DEBUG] Initializing OpenAI client with base_url: {API_BASE_URL}")
+            print(f"[DEBUG] API_KEY length: {len(API_KEY)}")
+            print(f"[DEBUG] API_KEY starts with: {API_KEY[:10]}...")
             client = openai.OpenAI(
                 api_key=API_KEY,
                 base_url=API_BASE_URL
             )
             
             print(f"[DEBUG] Making LLM API call for email classification")
+            print(f"[DEBUG] Model: {MODEL_NAME}")
+            print(f"[DEBUG] Temperature: {TEMPERATURE}")
+            print(f"[DEBUG] Max tokens: {MAX_TOKENS}")
             prompt = f"""
 You MUST respond ONLY in valid JSON.
 
@@ -60,6 +79,8 @@ Email:
             )
             
             print(f"[DEBUG] LLM API call successful, got response")
+            print(f"[DEBUG] Response type: {type(response)}")
+            print(f"[DEBUG] Response choices count: {len(response.choices)}")
             print("[LLM RAW OUTPUT]:", response.choices[0].message.content)
             
             # Extract JSON safely
