@@ -5,9 +5,11 @@ import time
 from typing import Dict, Any, Optional
 
 # Environment variables - Use OpenEnv provided ones
-API_BASE_URL = os.environ["API_BASE_URL"]
+API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
-API_KEY = os.environ["OPENAI_API_KEY"]
+HF_TOKEN = os.environ.get("HF_TOKEN")
+if not HF_TOKEN:
+    raise ValueError("HF_TOKEN environment variable is required")
 ENVIRONMENT_URL = "https://harini-1304-email-triage-env-final.hf.space"
 TASK_NAME = "email_triage"
 BENCHMARK = "openenv_round1"
@@ -28,10 +30,10 @@ class EmailTriageAgent:
         try:
             import openai
             # Use exact OpenEnv format
-            print(f"[DEBUG] Initializing OpenAI client with base_url: {os.environ['API_BASE_URL']}")
+            print(f"[DEBUG] Initializing OpenAI client with base_url: {API_BASE_URL}")
             client = openai.OpenAI(
-                api_key=os.environ["OPENAI_API_KEY"],
-                base_url=os.environ["API_BASE_URL"]
+                api_key=HF_TOKEN,
+                base_url=API_BASE_URL
             )
             
             print(f"[DEBUG] Making LLM API call for email classification")
@@ -269,12 +271,15 @@ def main():
         
     except KeyboardInterrupt:
         print("\n[INFO] Inference interrupted by user")
+        print("[END] success=false steps=0 score=0.00 rewards=")
     except requests.exceptions.RequestException as e:
         print(f"[ERROR] Network request failed: {e}")
+        print("[END] success=false steps=0 score=0.00 rewards=")
     except Exception as e:
         print(f"[ERROR] Inference failed: {e}")
         import traceback
         traceback.print_exc()
+        print("[END] success=false steps=0 score=0.00 rewards=")
 
 if __name__ == "__main__":
     main()
