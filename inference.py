@@ -203,6 +203,12 @@ def main():
     agent = EmailTriageAgent()
     
     try:
+        # Test environment connectivity first
+        test_response = requests.get(f"{ENVIRONMENT_URL}/", timeout=5)
+        if test_response.status_code != 200:
+            print(f"[ERROR] Environment not reachable: {test_response.status_code}")
+            return
+        
         # Run multiple episodes
         num_episodes = 3
         total_score = 0.0
@@ -246,8 +252,12 @@ def main():
         
     except KeyboardInterrupt:
         print("\n[INFO] Inference interrupted by user")
+    except requests.exceptions.RequestException as e:
+        print(f"[ERROR] Network request failed: {e}")
     except Exception as e:
-        print(f"\n[ERROR] Inference failed: {e}")
+        print(f"[ERROR] Inference failed: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()
