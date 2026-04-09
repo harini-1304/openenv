@@ -11,11 +11,25 @@ print(f"Python version: {os.sys.version}")
 print(f"Current working directory: {os.getcwd()}")
 
 # Environment variables - Use OpenEnv provided ones (NO DEFAULTS!)
+print("[ULTRA DEBUG] All available environment variables:")
+for key, value in sorted(os.environ.items()):
+    if any(keyword in key.upper() for keyword in ['API', 'KEY', 'TOKEN', 'URL', 'MODEL', 'OPENENV']):
+        if 'KEY' in key.upper() or 'TOKEN' in key.upper():
+            print(f"  {key}: *** ({len(value)} chars)")
+        else:
+            print(f"  {key}: {value}")
+
+print("[ULTRA DEBUG] Attempting to load required variables...")
+
 try:
     API_BASE_URL = os.environ["API_BASE_URL"]  # Required - no default!
     print(f"[ULTRA DEBUG] API_BASE_URL loaded: {API_BASE_URL}")
 except KeyError as e:
     print(f"[ULTRA DEBUG] API_BASE_URL MISSING: {e}")
+    print("[ULTRA DEBUG] Available URL-like variables:")
+    for key, value in os.environ.items():
+        if 'URL' in key.upper():
+            print(f"  {key}: {value}")
     raise
 
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
@@ -26,6 +40,10 @@ try:
     print(f"[ULTRA DEBUG] API_KEY loaded: {len(API_KEY)} chars, starts with: {API_KEY[:10]}...")
 except KeyError as e:
     print(f"[ULTRA DEBUG] API_KEY MISSING: {e}")
+    print("[ULTRA DEBUG] Available KEY-like variables:")
+    for key, value in os.environ.items():
+        if 'KEY' in key.upper() or 'TOKEN' in key.upper():
+            print(f"  {key}: *** ({len(value)} chars)")
     raise
 
 print(f"[ULTRA DEBUG] All environment variables loaded successfully")
