@@ -21,32 +21,52 @@ SUCCESS_SCORE_THRESHOLD = 0.1
 
 def load_environment_variables():
     """Load and validate environment variables"""
-    print("[ULTRA DEBUG] All available environment variables:")
+    print("[ULTRA DEBUG] ALL ENVIRONMENT VARIABLES:")
     for key, value in sorted(os.environ.items()):
-        if any(keyword in key.upper() for keyword in ['API', 'KEY', 'TOKEN', 'URL', 'MODEL', 'OPENENV']):
+        print(f"  {key}: {value}")
+    
+    print("\n[ULTRA DEBUG] FILTERED ENVIRONMENT VARIABLES:")
+    for key, value in sorted(os.environ.items()):
+        if any(keyword in key.upper() for keyword in ['API', 'KEY', 'TOKEN', 'URL', 'MODEL', 'OPENENV', 'BASE']):
             if 'KEY' in key.upper() or 'TOKEN' in key.upper():
                 print(f"  {key}: *** ({len(value)} chars)")
             else:
                 print(f"  {key}: {value}")
 
-    print("[ULTRA DEBUG] Attempting to load required variables...")
+    print("\n[ULTRA DEBUG] Attempting to load required variables...")
 
-    # OpenEnv exact requirements with mandatory defaults
-    API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")  # Required with default
-    print(f"[ULTRA DEBUG] API_BASE_URL loaded: {API_BASE_URL}")
+    # Try ALL possible variable names that OpenEnv might use
+    possible_base_urls = [
+        "API_BASE_URL", "OPENAI_API_BASE_URL", "OPENAI_BASE_URL", "HF_ENDPOINT", "BASE_URL"
+    ]
+    possible_api_keys = [
+        "API_KEY", "OPENAI_API_KEY", "HF_TOKEN", "OPENAI_KEY", "TOKEN"
+    ]
     
-    MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")  # Required with default
+    API_BASE_URL = None
+    for var_name in possible_base_urls:
+        if var_name in os.environ:
+            API_BASE_URL = os.environ[var_name]
+            print(f"[ULTRA DEBUG] Found API_BASE_URL in {var_name}: {API_BASE_URL}")
+            break
+    
+    if not API_BASE_URL:
+        API_BASE_URL = "https://api.openai.com/v1"  # Default
+        print(f"[ULTRA DEBUG] Using default API_BASE_URL: {API_BASE_URL}")
+    
+    MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
     print(f"[ULTRA DEBUG] MODEL_NAME: {MODEL_NAME}")
     
-    HF_TOKEN = os.getenv("HF_TOKEN")  # Mandatory, no default
-    if HF_TOKEN is None:
-        raise ValueError("HF_TOKEN environment variable is required")
-    print(f"[ULTRA DEBUG] HF_TOKEN loaded: {len(HF_TOKEN)} chars, starts with: {HF_TOKEN[:10]}...")
+    API_KEY = None
+    for var_name in possible_api_keys:
+        if var_name in os.environ:
+            API_KEY = os.environ[var_name]
+            print(f"[ULTRA DEBUG] Found API_KEY in {var_name}: {len(API_KEY)} chars, starts with: {API_KEY[:10]}...")
+            break
     
-    # For OpenAI client, use HF_TOKEN as API_KEY
-    API_KEY = HF_TOKEN
+    if not API_KEY:
+        raise ValueError("No API key found in any of: " + ", ".join(possible_api_keys))
 
-    print(f"[ULTRA DEBUG] All environment variables loaded successfully")
     print(f"[ULTRA DEBUG] Final API_BASE_URL: {API_BASE_URL}")
     print(f"[ULTRA DEBUG] Final API_KEY: {len(API_KEY)} chars")
     
