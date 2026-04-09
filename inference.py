@@ -10,65 +10,7 @@ print("=== IF YOU SEE THIS, INFERENCE.PY IS RUNNING ===")
 print(f"Python version: {os.sys.version}")
 print(f"Current working directory: {os.getcwd()}")
 
-# Environment variables - Use OpenEnv provided ones (NO DEFAULTS!)
-print("[ULTRA DEBUG] All available environment variables:")
-for key, value in sorted(os.environ.items()):
-    if any(keyword in key.upper() for keyword in ['API', 'KEY', 'TOKEN', 'URL', 'MODEL', 'OPENENV']):
-        if 'KEY' in key.upper() or 'TOKEN' in key.upper():
-            print(f"  {key}: *** ({len(value)} chars)")
-        else:
-            print(f"  {key}: {value}")
-
-print("[ULTRA DEBUG] Attempting to load required variables...")
-
-# Use OpenEnv's actual variable names
-try:
-    API_BASE_URL = os.environ.get("OPENAI_API_BASE_URL") or os.environ.get("HF_ENDPOINT", "https://api.openai.com/v1")
-    print(f"[ULTRA DEBUG] API_BASE_URL loaded: {API_BASE_URL}")
-except Exception as e:
-    print(f"[ULTRA DEBUG] API_BASE_URL ERROR: {e}")
-    print("[ULTRA DEBUG] Available URL-like variables:")
-    for key, value in os.environ.items():
-        if 'URL' in key.upper():
-            print(f"  {key}: {value}")
-    # Continue with default if missing
-    API_BASE_URL = API_BASE_URL or "https://api.openai.com/v1"
-
-MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
-print(f"[ULTRA DEBUG] MODEL_NAME: {MODEL_NAME}")
-
-try:
-    API_KEY = os.environ["OPENAI_API_KEY"]  # Use OpenEnv's variable name
-    print(f"[ULTRA DEBUG] API_KEY loaded: {len(API_KEY)} chars, starts with: {API_KEY[:10]}...")
-except KeyError as e:
-    print(f"[ULTRA DEBUG] API_KEY MISSING: {e}")
-    print("[ULTRA DEBUG] Available KEY-like variables:")
-    for key, value in os.environ.items():
-        if 'KEY' in key.upper() or 'TOKEN' in key.upper():
-            print(f"  {key}: *** ({len(value)} chars)")
-    # Fallback to HF_TOKEN if OPENAI_API_KEY missing
-    API_KEY = API_KEY or os.environ.get("HF_TOKEN", "")
-    if not API_KEY:
-        raise ValueError("No API key found in OPENAI_API_KEY or HF_TOKEN")
-
-print(f"[ULTRA DEBUG] All environment variables loaded successfully")
-print(f"[ULTRA DEBUG] Final API_BASE_URL: {API_BASE_URL}")
-print(f"[ULTRA DEBUG] Final API_KEY: {len(API_KEY)} chars")
-
-# Debug: Print all environment variables
-print("[DEBUG] All environment variables:")
-env_vars = {k: v for k, v in os.environ.items() if any(keyword in k.upper() for keyword in ['API', 'KEY', 'TOKEN', 'URL', 'MODEL'])}
-for k, v in env_vars.items():
-    if 'KEY' in k.upper() or 'TOKEN' in k.upper():
-        print(f"  {k}: ***")
-    else:
-        print(f"  {k}: {v}")
-
-# Force API_KEY - no fallbacks!
-API_KEY = os.environ["API_KEY"]  # Required by validator
-print(f"[DEBUG] Using API_KEY (required by validator)")
-print(f"[DEBUG] API_BASE_URL: {API_BASE_URL}")
-print(f"[DEBUG] MODEL_NAME: {MODEL_NAME}")
+# Constants
 ENVIRONMENT_URL = "https://harini-1304-email-triage-env-final.hf.space"
 TASK_NAME = "email_triage"
 BENCHMARK = "openenv_round1"
@@ -77,8 +19,59 @@ TEMPERATURE = 0.1
 MAX_TOKENS = 150
 SUCCESS_SCORE_THRESHOLD = 0.1
 
+def load_environment_variables():
+    """Load and validate environment variables"""
+    print("[ULTRA DEBUG] All available environment variables:")
+    for key, value in sorted(os.environ.items()):
+        if any(keyword in key.upper() for keyword in ['API', 'KEY', 'TOKEN', 'URL', 'MODEL', 'OPENENV']):
+            if 'KEY' in key.upper() or 'TOKEN' in key.upper():
+                print(f"  {key}: *** ({len(value)} chars)")
+            else:
+                print(f"  {key}: {value}")
+
+    print("[ULTRA DEBUG] Attempting to load required variables...")
+
+    # Use OpenEnv's actual variable names
+    try:
+        API_BASE_URL = os.environ.get("OPENAI_API_BASE_URL") or os.environ.get("HF_ENDPOINT", "https://api.openai.com/v1")
+        print(f"[ULTRA DEBUG] API_BASE_URL loaded: {API_BASE_URL}")
+    except Exception as e:
+        print(f"[ULTRA DEBUG] API_BASE_URL ERROR: {e}")
+        print("[ULTRA DEBUG] Available URL-like variables:")
+        for key, value in os.environ.items():
+            if 'URL' in key.upper():
+                print(f"  {key}: {value}")
+        # Continue with default if missing
+        API_BASE_URL = API_BASE_URL or "https://api.openai.com/v1"
+
+    MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
+    print(f"[ULTRA DEBUG] MODEL_NAME: {MODEL_NAME}")
+
+    try:
+        API_KEY = os.environ["OPENAI_API_KEY"]  # Use OpenEnv's variable name
+        print(f"[ULTRA DEBUG] API_KEY loaded: {len(API_KEY)} chars, starts with: {API_KEY[:10]}...")
+    except KeyError as e:
+        print(f"[ULTRA DEBUG] API_KEY MISSING: {e}")
+        print("[ULTRA DEBUG] Available KEY-like variables:")
+        for key, value in os.environ.items():
+            if 'KEY' in key.upper() or 'TOKEN' in key.upper():
+                print(f"  {key}: *** ({len(value)} chars)")
+        # Fallback to HF_TOKEN if OPENAI_API_KEY missing
+        API_KEY = API_KEY or os.environ.get("HF_TOKEN", "")
+        if not API_KEY:
+            raise ValueError("No API key found in OPENAI_API_KEY or HF_TOKEN")
+
+    print(f"[ULTRA DEBUG] All environment variables loaded successfully")
+    print(f"[ULTRA DEBUG] Final API_BASE_URL: {API_BASE_URL}")
+    print(f"[ULTRA DEBUG] Final API_KEY: {len(API_KEY)} chars")
+    
+    return API_BASE_URL, MODEL_NAME, API_KEY
+
 class EmailTriageAgent:
-    def __init__(self):
+    def __init__(self, api_base_url, model_name, api_key):
+        self.api_base_url = api_base_url
+        self.model_name = model_name
+        self.api_key = api_key
         self.total_reward = 0.0
         self.episodes_completed = 0
         self.step_count = 0
@@ -91,18 +84,18 @@ class EmailTriageAgent:
             print(f"[ULTRA DEBUG] About to import openai")
             # Use exact OpenEnv format
             print(f"[ULTRA DEBUG] Initializing OpenAI client")
-            print(f"[ULTRA DEBUG] Base URL: {API_BASE_URL}")
-            print(f"[ULTRA DEBUG] API Key: {len(API_KEY)} chars")
+            print(f"[ULTRA DEBUG] Base URL: {self.api_base_url}")
+            print(f"[ULTRA DEBUG] API Key: {len(self.api_key)} chars")
             client = openai.OpenAI(
-                api_key=API_KEY,
-                base_url=API_BASE_URL
+                api_key=self.api_key,
+                base_url=self.api_base_url
             )
             print(f"[ULTRA DEBUG] OpenAI client created successfully")
             
             print(f"[ULTRA DEBUG] About to make API call")
-            print(f"[ULTRA DEBUG] Model: {MODEL_NAME}")
+            print(f"[ULTRA DEBUG] Model: {self.model_name}")
             print(f"[ULTRA DEBUG] Email length: {len(email)} chars")
-            print(f"[DEBUG] Model: {MODEL_NAME}")
+            print(f"[DEBUG] Model: {self.model_name}")
             print(f"[DEBUG] Temperature: {TEMPERATURE}")
             print(f"[DEBUG] Max tokens: {MAX_TOKENS}")
             prompt = f"""
@@ -116,7 +109,7 @@ Email:
 """
             
             response = client.chat.completions.create(
-                model=MODEL_NAME,
+                model=self.model_name,
                 messages=[
                     {"role": "system", "content": "You are an email triage expert. Classify emails and determine appropriate responses."},
                     {"role": "user", "content": prompt}
@@ -289,12 +282,20 @@ Email:
 def main():
     """Main inference function with proper logging"""
     print("=== Email Triage Environment Inference ===")
-    print(f"API Base URL: {API_BASE_URL}")
-    print(f"Model: {MODEL_NAME}")
-    print(f"Environment URL: {ENVIRONMENT_URL}")
-    print()
     
-    agent = EmailTriageAgent()
+    # Load environment variables safely
+    try:
+        API_BASE_URL, MODEL_NAME, API_KEY = load_environment_variables()
+        print(f"API Base URL: {API_BASE_URL}")
+        print(f"Model: {MODEL_NAME}")
+        print(f"Environment URL: {ENVIRONMENT_URL}")
+        print()
+        
+        agent = EmailTriageAgent(API_BASE_URL, MODEL_NAME, API_KEY)
+    except Exception as e:
+        print(f"[ERROR] Failed to load environment variables: {e}")
+        print("[END] success=false steps=0 score=0.00 rewards=")
+        return
     
     try:
         # Test environment connectivity first
