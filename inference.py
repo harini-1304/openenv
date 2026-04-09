@@ -31,24 +31,23 @@ def load_environment_variables():
 
     print("[ULTRA DEBUG] Attempting to load required variables...")
 
-    # Use OpenEnv's actual variable names
+    # Use OpenEnv's EXACT variable names as specified in their instructions
     try:
-        API_BASE_URL = os.environ.get("OPENAI_API_BASE_URL") or os.environ.get("HF_ENDPOINT", "https://api.openai.com/v1")
+        API_BASE_URL = os.environ["API_BASE_URL"]  # Use OpenEnv's exact variable name
         print(f"[ULTRA DEBUG] API_BASE_URL loaded: {API_BASE_URL}")
-    except Exception as e:
-        print(f"[ULTRA DEBUG] API_BASE_URL ERROR: {e}")
+    except KeyError as e:
+        print(f"[ULTRA DEBUG] API_BASE_URL MISSING: {e}")
         print("[ULTRA DEBUG] Available URL-like variables:")
         for key, value in os.environ.items():
             if 'URL' in key.upper():
                 print(f"  {key}: {value}")
-        # Continue with default if missing
-        API_BASE_URL = API_BASE_URL or "https://api.openai.com/v1"
+        raise ValueError("API_BASE_URL is required by OpenEnv")
 
     MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
     print(f"[ULTRA DEBUG] MODEL_NAME: {MODEL_NAME}")
 
     try:
-        API_KEY = os.environ["OPENAI_API_KEY"]  # Use OpenEnv's variable name
+        API_KEY = os.environ["API_KEY"]  # Use OpenEnv's exact variable name
         print(f"[ULTRA DEBUG] API_KEY loaded: {len(API_KEY)} chars, starts with: {API_KEY[:10]}...")
     except KeyError as e:
         print(f"[ULTRA DEBUG] API_KEY MISSING: {e}")
@@ -56,10 +55,7 @@ def load_environment_variables():
         for key, value in os.environ.items():
             if 'KEY' in key.upper() or 'TOKEN' in key.upper():
                 print(f"  {key}: *** ({len(value)} chars)")
-        # Fallback to HF_TOKEN if OPENAI_API_KEY missing
-        API_KEY = API_KEY or os.environ.get("HF_TOKEN", "")
-        if not API_KEY:
-            raise ValueError("No API key found in OPENAI_API_KEY or HF_TOKEN")
+        raise ValueError("API_KEY is required by OpenEnv")
 
     print(f"[ULTRA DEBUG] All environment variables loaded successfully")
     print(f"[ULTRA DEBUG] Final API_BASE_URL: {API_BASE_URL}")
