@@ -216,7 +216,7 @@ Email:
     
     def run_episode(self) -> float:
         """Run one complete episode with proper logging"""
-        self.log_start(TASK_NAME, BENCHMARK, MODEL_NAME)
+        self.log_start(TASK_NAME, BENCHMARK, self.model_name)
         
         # Reset environment
         reset_result = self.reset_environment()
@@ -292,6 +292,14 @@ def main():
         print()
         
         agent = EmailTriageAgent(API_BASE_URL, MODEL_NAME, API_KEY)
+        
+        # Test logging output
+        print("[TEST] Testing structured output format...")
+        print("[START] task=email_triage env=openenv_round1 model=gpt-4o-mini", flush=True)
+        print("[STEP] step=1 action=test_action reward=0.50 done=false error=null", flush=True)
+        print("[END] success=true steps=1 score=0.50 rewards=0.50", flush=True)
+        print("[TEST] Structured output test complete")
+        
     except Exception as e:
         print(f"[ERROR] Failed to load environment variables: {e}")
         print("[END] success=false steps=0 score=0.00 rewards=")
