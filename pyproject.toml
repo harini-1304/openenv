@@ -50,6 +50,7 @@ Documentation = "https://huggingface.co/spaces/harini-1304/email-triage-env-fina
 [project.scripts]
 server = "server.app:main"
 inference = "inference:main"
+email-triage-inference = "inference:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

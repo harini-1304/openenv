@@ -5,6 +5,8 @@ import time
 from typing import Dict, Any, Optional
 
 print("=== INFERENCE.PY STARTED ===")
+print("=== THIS IS THE ULTRA DEBUG VERSION ===")
+print("=== IF YOU SEE THIS, INFERENCE.PY IS RUNNING ===")
 print(f"Python version: {os.sys.version}")
 print(f"Current working directory: {os.getcwd()}")
 
