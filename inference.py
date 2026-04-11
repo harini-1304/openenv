@@ -20,28 +20,17 @@ MAX_TOKENS = 150
 SUCCESS_SCORE_THRESHOLD = 0.1
 
 def load_environment_variables():
-    """Load and validate environment variables - FORCE OPENENV PROXY"""
-    print("[OPENENV PROXY] Forcing API calls through OpenEnv LiteLLM proxy...")
-    
-    # OpenEnv provides these exact variables - FORCE THEM
-    API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-    MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
-    API_KEY = os.getenv("API_KEY")  # OpenEnv provides this
-    
+    """Load and validate environment variables - STRICT OpenEnv only"""
+    print("[OPENENV PROXY] Using STRICT OpenEnv variables - NO FALLBACKS")
+
+    # STRICT - NO FALLBACKS ALLOWED
+    API_BASE_URL = os.environ["API_BASE_URL"]   # NO fallback
+    MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")  # Only MODEL_NAME can have default
+    API_KEY = os.environ["API_KEY"]             # NO fallback
+
     print(f"[OPENENV PROXY] API_BASE_URL: {API_BASE_URL}")
     print(f"[OPENENV PROXY] MODEL_NAME: {MODEL_NAME}")
-    print(f"[OPENENV PROXY] API_KEY found: {'YES' if API_KEY else 'NO'}")
-    
-    if not API_KEY:
-        # Try fallback to HF_TOKEN
-        API_KEY = os.getenv("HF_TOKEN")
-        print(f"[OPENENV PROXY] Using HF_TOKEN as fallback: {'YES' if API_KEY else 'NO'}")
-    
-    if not API_KEY:
-        raise ValueError("No API key found in API_KEY or HF_TOKEN")
-    
-    print(f"[OPENENV PROXY] Final API_KEY length: {len(API_KEY)} chars")
-    print(f"[OPENENV PROXY] API_KEY starts with: {API_KEY[:10]}...")
+    print(f"[OPENENV PROXY] API_KEY loaded: {len(API_KEY)} chars")
     
     return API_BASE_URL, MODEL_NAME, API_KEY
 
