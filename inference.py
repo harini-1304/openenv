@@ -207,6 +207,11 @@ def main():
     print("=== Email Triage Environment Inference ===")
     print("[DEBUG] Starting main function...")
     
+    # 🔥 PROOF STEP - Check env vars BEFORE loading
+    print("ENV CHECK:")
+    print("API_BASE_URL =", os.environ.get("API_BASE_URL"))
+    print("API_KEY exists =", "API_KEY" in os.environ)
+    
     # IMMEDIATE STRUCTURED OUTPUT TEST - RIGHT AT START
     print("[IMMEDIATE_TEST] Structured output test at very start...")
     print("[START] task=email_triage env=openenv_round1 model=gpt-4o-mini", flush=True)
