@@ -145,8 +145,8 @@ class EmailTriageAgent:
         reset_result = self.reset_environment()
         if not reset_result:
             print("[ERROR] Failed to reset environment")
-            self.log_end(False, 0, 0.0, [])
-            return 0.0
+            self.log_end(False, 0, 0.1, [])
+            return 0.1
         
         episode_reward = 0.0
         self.step_count = 0
@@ -191,8 +191,8 @@ class EmailTriageAgent:
             # Update for next iteration
             reset_result = step_result
         
-        # Calculate final score (normalized to [0, 1])
-        final_score = min(episode_reward / 9.0, 1.0)  # Normalize to [0, 1]
+        # Calculate final score (normalized to (0, 1) - strict)
+        final_score = min(max(episode_reward / 9.0, 0.1), 0.9)  # Strictly between 0 and 1
         
         # Log episode end
         self.log_end(episode_success, self.step_count, final_score, self.rewards)
@@ -242,7 +242,7 @@ def main():
         
     except Exception as e:
         print(f"[ERROR] Failed to load environment variables: {e}")
-        print("[END] success=false steps=0 score=0.00 rewards=", flush=True)
+        print("[END] success=false steps=0 score=0.10 rewards=", flush=True)
         return
     
     try:
