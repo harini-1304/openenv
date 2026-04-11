@@ -20,55 +20,28 @@ MAX_TOKENS = 150
 SUCCESS_SCORE_THRESHOLD = 0.1
 
 def load_environment_variables():
-    """Load and validate environment variables"""
-    print("[ULTRA DEBUG] ALL ENVIRONMENT VARIABLES:")
-    for key, value in sorted(os.environ.items()):
-        print(f"  {key}: {value}")
+    """Load and validate environment variables - FORCE OPENENV PROXY"""
+    print("[OPENENV PROXY] Forcing API calls through OpenEnv LiteLLM proxy...")
     
-    print("\n[ULTRA DEBUG] FILTERED ENVIRONMENT VARIABLES:")
-    for key, value in sorted(os.environ.items()):
-        if any(keyword in key.upper() for keyword in ['API', 'KEY', 'TOKEN', 'URL', 'MODEL', 'OPENENV', 'BASE']):
-            if 'KEY' in key.upper() or 'TOKEN' in key.upper():
-                print(f"  {key}: *** ({len(value)} chars)")
-            else:
-                print(f"  {key}: {value}")
-
-    print("\n[ULTRA DEBUG] Attempting to load required variables...")
-
-    # Try ALL possible variable names that OpenEnv might use
-    possible_base_urls = [
-        "API_BASE_URL", "OPENAI_API_BASE_URL", "OPENAI_BASE_URL", "HF_ENDPOINT", "BASE_URL"
-    ]
-    possible_api_keys = [
-        "API_KEY", "OPENAI_API_KEY", "HF_TOKEN", "OPENAI_KEY", "TOKEN"
-    ]
-    
-    API_BASE_URL = None
-    for var_name in possible_base_urls:
-        if var_name in os.environ:
-            API_BASE_URL = os.environ[var_name]
-            print(f"[ULTRA DEBUG] Found API_BASE_URL in {var_name}: {API_BASE_URL}")
-            break
-    
-    if not API_BASE_URL:
-        API_BASE_URL = "https://api.openai.com/v1"  # Default
-        print(f"[ULTRA DEBUG] Using default API_BASE_URL: {API_BASE_URL}")
-    
+    # OpenEnv provides these exact variables - FORCE THEM
+    API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
     MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
-    print(f"[ULTRA DEBUG] MODEL_NAME: {MODEL_NAME}")
+    API_KEY = os.getenv("API_KEY")  # OpenEnv provides this
     
-    API_KEY = None
-    for var_name in possible_api_keys:
-        if var_name in os.environ:
-            API_KEY = os.environ[var_name]
-            print(f"[ULTRA DEBUG] Found API_KEY in {var_name}: {len(API_KEY)} chars, starts with: {API_KEY[:10]}...")
-            break
+    print(f"[OPENENV PROXY] API_BASE_URL: {API_BASE_URL}")
+    print(f"[OPENENV PROXY] MODEL_NAME: {MODEL_NAME}")
+    print(f"[OPENENV PROXY] API_KEY found: {'YES' if API_KEY else 'NO'}")
     
     if not API_KEY:
-        raise ValueError("No API key found in any of: " + ", ".join(possible_api_keys))
-
-    print(f"[ULTRA DEBUG] Final API_BASE_URL: {API_BASE_URL}")
-    print(f"[ULTRA DEBUG] Final API_KEY: {len(API_KEY)} chars")
+        # Try fallback to HF_TOKEN
+        API_KEY = os.getenv("HF_TOKEN")
+        print(f"[OPENENV PROXY] Using HF_TOKEN as fallback: {'YES' if API_KEY else 'NO'}")
+    
+    if not API_KEY:
+        raise ValueError("No API key found in API_KEY or HF_TOKEN")
+    
+    print(f"[OPENENV PROXY] Final API_KEY length: {len(API_KEY)} chars")
+    print(f"[OPENENV PROXY] API_KEY starts with: {API_KEY[:10]}...")
     
     return API_BASE_URL, MODEL_NAME, API_KEY
 
@@ -83,26 +56,29 @@ class EmailTriageAgent:
         self.rewards = []
         
     def classify_email_llm(self, email: str) -> Dict[str, str]:
-        """Use LLM to classify email"""
+        """Use LLM to classify email - FORCE THROUGH OPENENV PROXY"""
         try:
             import openai
-            print(f"[ULTRA DEBUG] About to import openai")
-            # Use exact OpenEnv format
-            print(f"[ULTRA DEBUG] Initializing OpenAI client")
-            print(f"[ULTRA DEBUG] Base URL: {self.api_base_url}")
-            print(f"[ULTRA DEBUG] API Key: {len(self.api_key)} chars")
+            print(f"[OPENENV PROXY] Starting API call through LiteLLM proxy...")
+            
+            # FORCE use of OpenEnv proxy - NO DEFAULTS, NO FALLBACKS
+            print(f"[OPENENV PROXY] Base URL: {self.api_base_url}")
+            print(f"[OPENENV PROXY] API Key: {len(self.api_key)} chars")
+            print(f"[OPENENV PROXY] Model: {self.model_name}")
+            
+            # Initialize client with OpenEnv proxy
             client = openai.OpenAI(
                 api_key=self.api_key,
                 base_url=self.api_base_url
             )
-            print(f"[ULTRA DEBUG] OpenAI client created successfully")
+            print(f"[OPENENV PROXY] OpenAI client initialized for proxy")
             
-            print(f"[ULTRA DEBUG] About to make API call")
-            print(f"[ULTRA DEBUG] Model: {self.model_name}")
-            print(f"[ULTRA DEBUG] Email length: {len(email)} chars")
-            print(f"[DEBUG] Model: {self.model_name}")
-            print(f"[DEBUG] Temperature: {TEMPERATURE}")
-            print(f"[DEBUG] Max tokens: {MAX_TOKENS}")
+            print(f"[OPENENV PROXY] Making API call through LiteLLM proxy...")
+            print(f"[OPENENV PROXY] Model: {self.model_name}")
+            print(f"[OPENENV PROXY] Email length: {len(email)} chars")
+            print(f"[OPENENV PROXY] Temperature: {TEMPERATURE}")
+            print(f"[OPENENV PROXY] Max tokens: {MAX_TOKENS}")
+            
             prompt = f"""
 You MUST respond ONLY in valid JSON.
 
@@ -113,6 +89,10 @@ Email:
 {email}
 """
             
+            print(f"[OPENENV PROXY] Sending request to: {self.api_base_url}")
+            print(f"[OPENENV PROXY] Request model: {self.model_name}")
+            
+            # FORCE API call through OpenEnv proxy
             response = client.chat.completions.create(
                 model=self.model_name,
                 messages=[
@@ -123,12 +103,11 @@ Email:
                 max_tokens=MAX_TOKENS
             )
             
-            print(f"[ULTRA DEBUG] API call completed successfully!")
-            print(f"[ULTRA DEBUG] Response type: {type(response)}")
-            print(f"[ULTRA DEBUG] Response choices count: {len(response.choices)}")
-            print(f"[ULTRA DEBUG] First choice: {response.choices[0]}")
-            print(f"[ULTRA DEBUG] Message content: {response.choices[0].message.content}")
-            print("[LLM RAW OUTPUT]:", response.choices[0].message.content)
+            print(f"[OPENENV PROXY] API call completed successfully!")
+            print(f"[OPENENV PROXY] Response received: {type(response)}")
+            print(f"[OPENENV PROXY] Response choices: {len(response.choices)}")
+            print(f"[OPENENV PROXY] Message content: {response.choices[0].message.content}")
+            print("[OPENENV PROXY RAW OUTPUT]:", response.choices[0].message.content)
             
             # Extract JSON safely
             content = response.choices[0].message.content.strip()
@@ -145,11 +124,12 @@ Email:
             return result
             
         except Exception as e:
-            print(f"[ERROR] LLM FAILED:", e)
+            print(f"[OPENENV PROXY ERROR] API call through LiteLLM proxy failed!")
+            print(f"[OPENENV PROXY ERROR] Error: {e}")
             import traceback
             traceback.print_exc()
-            # CRITICAL: Do not return fallback - force the error to be visible
-            raise Exception(f"LLM API call failed: {e}")
+            print(f"[OPENENV PROXY ERROR] This means OpenEnv cannot detect API calls!")
+            raise Exception(f"OpenEnv LiteLLM proxy API call failed: {e}")
     
     def classify_email_rules(self, email: str) -> Dict[str, str]:
         """Rule-based email classification"""
