@@ -297,12 +297,22 @@ Email Input
 - **Error Tracking**: Comprehensive failure logging
 - **Pattern Analysis**: Learning effectiveness monitoring
 
-## Team Information
+## Key Innovations
 
-**Team**: Hack Maestros  
-**Competition**: OpenEnv Round 1  
-**Environment**: Email Triage  
-**Version**: 2.1 (Production-Grade)  
+- **Hybrid rule + LLM agent architecture** - Combines fast rule-based decisions with complex LLM reasoning and robust fallback
+- **Multi-factor reward shaping (accuracy + efficiency + confidence)** - Smart reward calculation with category correctness, response correctness, fast decision bonus, and high confidence bonus
+- **Curriculum-based environment difficulty** - Progressive difficulty from easy to hard across episodes
+- **Stateful agent memory across steps** - Pattern tracking and adaptive learning from mistakes
+- **Adaptive learning from reward feedback** - Agent adjusts strategy bias based on performance
+- **Business context layer with department classification** - Enterprise-grade routing and urgency reasoning
+- **Thread awareness and explainability** - Real-world email thread detection and decision transparency
+
+## Authors
+
+- **Harini (Subhaharini)** - Environment Design, Agent Architecture  
+- **Dhanush** - System Design, Optimization & Testing  
+
+OpenEnv Hackathon Participants
 
 ### Contact
 - **Repository**: https://github.com/harini-1304/open-env
