@@ -333,7 +333,7 @@ Email Input
 
 ## Authors
 
-- **Harini Subhaharini S K** - Environment Design, Agent Architecture  
+- **Subhaharini S K** - Environment Design, Agent Architecture  
 - **Dhanush S** - System Design, Optimization & Testing  
 
 OpenEnv Hackathon Participants
